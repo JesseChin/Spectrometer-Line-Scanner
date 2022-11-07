@@ -1,0 +1,28 @@
+title Spectrometer Controller Operation
+
+[*] --> Integrate : Begin integration
+state Integrate {
+    Position : Position of spectrometer
+    Data : Spectral data array
+    Integrate --> Integrate : Integration not complete
+
+}
+state Process {
+    Integrate --> Cleanup : End Integration
+    Cleanup -> Average : Filtered data
+    note bottom of Cleanup 
+        Perform cosine similarity on 
+        spectra data to throw out 
+        non-plant data
+    end note
+    Average : Average values of Spectral integration
+    Average --> [*] : Save Spectra to drive
+    
+}
+state "Motor Controller (Arduino)" as Motor
+Integrate --> Motor : Move to next position
+Motor --> Integrate : Position
+Integrate --> Spectrometer : Scan Signal
+Spectrometer --> Integrate : Spectra
+
+Average --> Server : Complete Spectra

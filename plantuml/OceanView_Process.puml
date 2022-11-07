@@ -1,0 +1,53 @@
+title Spectrometer Processing Sequence w/ OceanView
+/' 
+    Program flow on the computer with OceanView Installed
+'/
+state "Begin Capture" as Capture {
+    state OceanView {
+        OceanView : Press "Save graph to files"
+        OceanView : button in OceanView
+    }
+    OceanView -> Controller
+    state "Arduino" as Controller {
+        Controller : Activate stepper motor
+        Controller : sequence manually
+    }
+}
+state Process {
+    state Cleanup {
+        state "Remove Duplicates" as dupes {
+            dupes : Perform cosine similarity
+            dupes : to remove repeated spectra from
+            dupes : the beginning and end sequence
+        }
+        note bottom of dupes
+            Required because there will be extraneous
+            data taken at the beginning and end. If
+            not performed, may throw off averages
+        end note
+        state "Remove Non-Plant Spectra" as cleanspectra {
+            cleanspectra : Perform cosine similarity
+            cleanspectra : comparing against known 
+            cleanspectra : plant spectra, removing any
+            cleanspectra : non-plant spectra data
+        }
+    }
+    Cleanup -> Average : Cleaned data
+    state Average {
+        Average : Average spectra data array
+        Average : into a single spectrum,
+        Average : representing total plant
+        Average : spectra
+    }
+}
+Capture -down-> Process : Finished Capture
+Process -down-> Output : Averaged spectra
+state Output {
+    state "Save File" as File {
+        File : Save file to .txt
+        File : Save spectra graph as .jpg
+    }
+    state Server {
+        Server : Output results to a server
+    }
+}

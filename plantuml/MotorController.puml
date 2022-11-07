@@ -1,0 +1,9 @@
+title Motor Controller
+hide empty description
+Idle -down-> mvMtr : Begin Signal
+state "Move Motor" as mvMtr
+mvMtr: Send signal to motor driver
+mvMtr: to move motor
+mvMtr -right-> mvBack : Endstop 1 reached
+state "Return to Origin" as mvBack 
+mvBack -up-> Idle : Endstop 2 reached

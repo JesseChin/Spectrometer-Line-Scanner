@@ -1,0 +1,25 @@
+@startuml
+frame "End Stops" {
+    component "End Stop 1" {
+        portout p1
+    }
+    component "End Stop 2" {
+        portout p2
+    }
+}
+    component "Microcontroller" as MCU {
+        portin GPIO0 as es1
+        portin GPIO1 as es2
+        portout GPIO2 as mplus_out
+        portout GPIO3 as mminus_out
+    }
+'}
+p1 --> es1
+p2 --> es2
+component "DC Stepper Motor" as Motor {
+    portin "M+" as mplus_in
+    portin "M-" as mminus_in
+}
+mplus_out --> mplus_in
+mminus_out --> mminus_in
+@enduml

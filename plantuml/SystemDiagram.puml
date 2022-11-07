@@ -1,0 +1,3 @@
+title System Diagram
+Spectrometer->:Raspberry Pi: : Stream of Images
+:Raspberry Pi:->Webserver : Spectra
