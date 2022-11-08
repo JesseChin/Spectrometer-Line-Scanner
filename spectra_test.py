@@ -86,7 +86,7 @@ def integrate_inplace():
         mult_intensities = np.column_stack((mult_intensities, intensities))
     mult_intensities = mult_intensities[:,1:]
     print(mult_intensities.shape)
-    np.save('mult_intensities_ref', mult_intensities)
+    np.save('mult_intensities_ref2', mult_intensities)
 
 def integrate(i):
     spec.integration_time_micros(20000)
