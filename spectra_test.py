@@ -32,15 +32,15 @@ pwm.start(0)
 intensities_arr = [] # to store in numpy
 halted = False
 
-def start():
+def backward():
     print("Moving motor to beginning")
     # Move motor backwards
     GPIO.output(DIR, GPIO.LOW)
     # GPIO.PWM(PUL,SPEED)
     pwm.ChangeDutyCycle(50)
 
-def end():
-    print("Moving motor to end")
+def forward():
+    print("Moving motor to forward")
     # Move motor forwards
     GPIO.output(DIR, GPIO.HIGH)
     # GPIO.PWM(PUL,SPEED)
@@ -55,34 +55,30 @@ def exit_program():
     GPIO.cleanup()
     # break
 
-def integration_process():
+def integration_process(wait_time=1):
     ''' 
     This function doesn't exit properly until it is
     modified to work with asynchronously with asyncio.
     In current implementation, consider exiting when it hits
     the end with ctrl-c
     '''
-    # i = 0
     mult_intensities = np.empty((3648,1), np.float64)
     for i in range(30):
         halt()
-        integrate(i)
-        # move motor forward
-        # pwm.ChangeDutyCycle(50)
-        end()
-        sleep(1)
-        # i += 1
+        intensities, _ = np.asarray(integrate(i))
+        forward()
+        sleep(wait_time)
+        mult_intensities = np.column_stack((mult_intensities, intensities))
+    mult_intensities = mult_intensities[:,1:]
+    print(mult_intensities.shape)
+    np.save('mult_intensities_ref', mult_intensities)
         
 def integrate_inplace():
     i = 0
-    # mult_intensities = []
     mult_intensities = np.empty((3648,1), np.float64)
     for i in range(15):
         intensities, _= np.asarray(integrate(i))
         sleep(.5)
-        # np.append(mult_intensities, intensities, axis=0)
-        # mult_intensities.append(intensities, axis=1)
-        # mult_intensities = np.vstack((mult_intensities, intensities))
         mult_intensities = np.column_stack((mult_intensities, intensities))
     mult_intensities = mult_intensities[:,1:]
     print(mult_intensities.shape)
@@ -104,9 +100,9 @@ def integrate(i):
     fig.savefig(buf)
     return intensities, wavelengths
 
-print('Valid inputs: start, end, halt, integrate')
+print('Valid inputs: backward, forward, halt, integrate')
 print('Because we do not have endstops yet, we need to ')
-print('feed in the inputs \'start\', wait for it to reach ')
+print('feed in the inputs \'backward\', wait for it to reach ')
 print('the origin, \'halt\' to stop it from hitting the ')
 print('edge, and \'integrate\' to begin integrations. At ')
 print('the end of the sequence.')
@@ -114,12 +110,12 @@ ended = False
 while ended == False:
     command = input('Input: ')
 
-    if (command == 'start'):
-        print('Going to start')
-        start()
-    elif (command == 'end'):
-        print('Going to end')
-        end()
+    if (command == 'backward'):
+        print('Going to backward')
+        backward()
+    elif (command == 'forward'):
+        print('Going to forward')
+        forward()
     elif (command == 'halt'):
         print('Ending')
         halt()

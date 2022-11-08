@@ -1,13 +1,16 @@
 title Spectrometer Controller Operation
 
-[*] --> Integrate : Begin integration
-state Integrate {
+[*] --> Integrate : Begin integration sequence
+state "Integration Phase" as Integrate {
     Position : Position of spectrometer
+    note bottom of Position
+        Implicitly known by motor (speed / time)
+    end note
     Data : Spectral data array
     Integrate --> Integrate : Integration not complete
 
 }
-state Process {
+state "Post-Processing Phase" as Process {
     Integrate --> Cleanup : End Integration
     Cleanup -> Average : Filtered data
     note bottom of Cleanup 
@@ -19,10 +22,11 @@ state Process {
     Average --> [*] : Save Spectra to drive
     
 }
-state "Motor Controller (Arduino)" as Motor
-Integrate --> Motor : Move to next position
-Motor --> Integrate : Position
-Integrate --> Spectrometer : Scan Signal
-Spectrometer --> Integrate : Spectra
+state "Motor Driver (TB6600)" as Motor
+Motor : Moves the spectrometer along the rail
+Integrate -left-> Motor : Move to next position
+'Motor -right-> Integrate : Position
+Integrate -down-> Spectrometer : Scan Signal
+Spectrometer -up-> Integrate : Spectral intensities
 
 Average --> Server : Complete Spectra
