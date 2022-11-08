@@ -11,8 +11,9 @@ spec = Spectrometer.from_first_available()
 spec.integration_time_micros(20000)
 
 # Constants
-DIR = 37 # Board PIN 37
+DIR = 37 # Board PIN 37 for Direction control
 PUL = 35 # Board PIN 35 for PWM
+ENA = 33 # Board PIN 33 for Enable pin - used to turn motor on and off
 SPEED = 2000 # freq of PWM to control the speed of the motor
 # empirically tested range 20-10,000Hz
 
@@ -23,6 +24,7 @@ GPIO.setwarnings(False)
 
 GPIO.setup(DIR, GPIO.OUT, initial=GPIO.HIGH)
 GPIO.setup(PUL, GPIO.OUT)
+GPIO.setup(ENA, GPIO.OUT, initial=GPIO.HIGH)
 
 # The speed of the scanner is controlled through frequency, not duty cycle!
 # ~20Hz is slowest speed, 10,000Hz is fastest speed (starts slipping after)
@@ -36,31 +38,35 @@ def backward():
     print("Moving motor to beginning")
     # Move motor backwards
     GPIO.output(DIR, GPIO.LOW)
-    # GPIO.PWM(PUL,SPEED)
-    pwm.ChangeDutyCycle(50)
+    pwm.start(50)
 
 def forward():
     print("Moving motor to forward")
     # Move motor forwards
     GPIO.output(DIR, GPIO.HIGH)
-    # GPIO.PWM(PUL,SPEED)
-    pwm.ChangeDutyCycle(50)
+    pwm.start(50)
+
+def enable():
+    GPIO.output(ENA, GPIO.LOW)
+    
+def disable():
+    GPIO.output(ENA, GPIO.HIGH)
 
 def halt():
+    print("Halted")
     # Stop motor moving forward
     pwm.ChangeDutyCycle(0)
     halted = True
+    pwm.stop()
 
 def exit_program():
+    pwm.stop()
     GPIO.cleanup()
-    # break
 
 def integration_process(wait_time=1):
     ''' 
-    This function doesn't exit properly until it is
-    modified to work with asynchronously with asyncio.
-    In current implementation, consider exiting when it hits
-    the end with ctrl-c
+    This function doesn't exit properly until it is modified to work with asynchronously with asyncio. 
+    In current implementation, consider exiting when it hits the end with ctrl-c
     '''
     mult_intensities = np.empty((3648,1), np.float64)
     for i in range(30):
@@ -100,12 +106,23 @@ def integrate(i):
     fig.savefig(buf)
     return intensities, wavelengths
 
-print('Valid inputs: backward, forward, halt, integrate')
-print('Because we do not have endstops yet, we need to ')
-print('feed in the inputs \'backward\', wait for it to reach ')
-print('the origin, \'halt\' to stop it from hitting the ')
-print('edge, and \'integrate\' to begin integrations. At ')
-print('the end of the sequence.')
+def graph_spectrum(fname, intensities, wavelengths):
+    fig = plt.figure();
+    ax = plt.axes()
+    buf = "Lettuce Spectrum 2022-11-07 Sample #%d" % i
+    ax.set_title(('Spectra #%d',i))
+    ax.set_xlabel('wavelength (nm)')
+    ax.set_ylabel('intensities')
+    ax.plot(wavelengths, intensities) 
+    buf = "data/spectra%d.png" % i
+    fig.savefig(buf)
+
+print(''' Valid inputs: backward, forward, halt, integrate, enable, disable 
+Because we do not have endstops yet, we need to feed in the inputs \'backward\', wait 
+for it to reach the origin, \'halt\' to stop it from hitting the edge, and \'integrate\' 
+to begin integrations. At the end of the sequence.
+''') 
+print('Make sure you run enable before running the program')
 ended = False
 while ended == False:
     command = input('Input: ')
@@ -129,4 +146,7 @@ while ended == False:
         print('Exiting program')
         exit_program()
         ended = True
-        # break
+    elif (command == 'enable'):
+        GPIO.output(ENA, GPIO.LOW)
+    elif (command == 'disable'):
+        GPIO.output(ENA, GPIO.HIGH)

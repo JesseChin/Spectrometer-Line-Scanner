@@ -40,12 +40,12 @@ class Stepper:
         # Destructor
         GPIO.cleanup()
 
-    def start():
+    def backward():
         # Return to the starting position
         GPIO.wait_for_edge(start_pin, GPIO.RISING)
         GPIO.output(DIR, GPIO.HIGH)
 
-    def end():
+    def forward():
         # Return to the ending position
         GPIO.wait_for_edge(end_pin, GPIO.RISING)
 
